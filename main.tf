@@ -5,8 +5,8 @@ module "gke-cluster" {
   project_id             = var.project_id
   cluster_name           = var.cluster_name
   cluster_location       = var.cluster_zone
-  network                = "projects/${var.project_id}/global/networks/default"
-  subnetwork             = "projects/${var.project_id}/regions/${var.region}/subnetworks/default"
+  network                = "projects/${var.project_id}/global/networks/hashi-vpc"
+  subnetwork             = "projects/${var.project_id}/regions/${var.region}/subnetworks/hash-vault"
   initial_node_count     = var.num_vault_pods
   unseal_service_account = module.unseal_kms.service_account
 }
@@ -19,6 +19,19 @@ module "tls" {
   country           = var.cert_country
 }
 
+#module "tls_vault" {
+#  source            = "./modules/tls-vault"
+#  hostname          = var.cert_common_name
+#  organization_name = var.cert_organization_name
+#  common_name       = var.cert_common_name
+#  country           = var.cert_country
+#  project_id       = var.project_id
+#  credentials_file = var.credentials_file
+#  cluster_endpoint = module.gke-cluster.endpoint
+#  cluster_cert     = module.gke-cluster.ca_certificate
+#  vault_namespace  = module.vault.vault_namespace
+#  cert_secret_name = var.cert_secret_name
+#}
 module "acme_cert" {
   source           = "./modules/acme-cert"
   project_id       = var.project_id
@@ -61,6 +74,7 @@ module "vault" {
   vault_internal_tls_key    = module.tls.key
   loadbalancer_ip           = module.external_ip_address.ip_address
   vault_tls_k8s_secret      = var.cert_secret_name
+  #vault_tls_secret_resource = module.tls_vault.cert
   vault_tls_secret_resource = module.acme_cert.secret_resource
   vault_hostname            = var.vault_hostname
 }
