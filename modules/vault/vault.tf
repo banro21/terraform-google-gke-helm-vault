@@ -1,3 +1,4 @@
+
 resource "helm_release" "vault" {
   name       = "vault"
   chart      = "vault"
@@ -9,8 +10,10 @@ global:
   tlsDisable: false
 server:
   image:
-    repository: "vault"
+    repository: "hashicorp/vault-enterprise"
     tag: "${var.vault_version}"
+  enterpriseLicense:
+    secretName: vault-ent-license
   agentImage:
     repository: "vault"
     tag: "${var.vault_version}"
@@ -53,6 +56,7 @@ server:
           tls_cert_file = "/vault/userconfig/${var.vault_tls_k8s_secret}/tls.crt"
           tls_key_file  = "/vault/userconfig/${var.vault_tls_k8s_secret}/tls.key"
           tls_client_ca_file = "/vault/userconfig/vault-acme-tls/tls.ca"
+          tls_disable_client_certs = "true"
         }
 
         listener "tcp" {
@@ -69,6 +73,7 @@ server:
           region      = "global"
           key_ring    = "${var.unseal_keyring_name}"
           crypto_key  = "${var.unseal_key_name}"
+          region      = "${var.unseal_keyring_region}"
         }
 
         storage "raft" {

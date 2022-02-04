@@ -19,3 +19,14 @@ resource "kubernetes_secret" "vault_local_tls" {
 
   type = "Opaque"
 }
+resource "kubernetes_secret" "vault-license" {
+ # host = var.cluster_endpoint
+  metadata {
+    name      = "vault-ent-license"
+    namespace = kubernetes_namespace.vault.metadata.0.name
+  }
+  data = {
+    "license"  = file(var.vault_license)
+  }
+  type = "Opaque"
+}

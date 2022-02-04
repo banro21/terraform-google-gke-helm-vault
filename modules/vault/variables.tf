@@ -16,6 +16,11 @@ variable "unseal_keyring_name" {
   description = "Keyring name containing the GKMS key that will unseal Vault"
 }
 
+variable "unseal_keyring_region" {
+  type        = string
+  description = "Keyring region containing the GKMS key that will unseal Vault"
+}
+
 variable "unseal_key_name" {
   type        = string
   description = "Name of key inside the unseal keyring that unseals the vault"
@@ -68,4 +73,8 @@ variable "vault_tls_k8s_secret" {
 
 variable "vault_tls_secret_resource" {
   description = "Link to k8s secret resource for the sake of creating a cross-module dependency"
+}
+variable "vault_license" {
+  type        = string
+  description = "enterprise license"
 }

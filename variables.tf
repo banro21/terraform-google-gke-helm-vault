@@ -23,6 +23,11 @@ variable "credentials_file" {
   description = "Path to GCP Credentials JSON file"
 }
 
+variable "license_file" {
+  type        = string
+  description = "Vault enterprise license file"
+}
+
 variable "num_vault_pods" {
   type        = number
   default     = 3
@@ -62,4 +67,17 @@ variable "public_cert_email_address" {
 variable "vault_version" {
   type        = string
   description = "Version of Hashicorp Vault to use (e.g. '1.5.5')"
+}
+variable "key_ring" {
+  description = "Cloud KMS key ring name to create"
+  default     = "test"
+}
+
+variable "crypto_key" {
+  default     = "vault-test"
+  description = "Crypto key name to create under the key ring"
+}
+
+variable "keyring_location" {
+  default = "global"
 }

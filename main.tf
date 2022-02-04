@@ -1,3 +1,10 @@
+terraform {
+  backend "gcs" {
+    bucket = "dev-hashi-tfstate"
+    prefix = "gke-vault"
+    credentials = "/Users/robansal/Downloads/dev-hashi-f9ab88dcb6d2.json"
+  }
+}
 module "gke-cluster" {
   source                 = "./modules/google-gke-cluster/"
   credentials_file       = var.credentials_file
@@ -19,30 +26,30 @@ module "tls" {
   country           = var.cert_country
 }
 
-#module "tls_vault" {
-#  source            = "./modules/tls-vault"
-#  hostname          = var.cert_common_name
-#  organization_name = var.cert_organization_name
-#  common_name       = var.cert_common_name
-#  country           = var.cert_country
-#  project_id       = var.project_id
-#  credentials_file = var.credentials_file
-#  cluster_endpoint = module.gke-cluster.endpoint
-#  cluster_cert     = module.gke-cluster.ca_certificate
-#  vault_namespace  = module.vault.vault_namespace
-#  cert_secret_name = var.cert_secret_name
-#}
-module "acme_cert" {
-  source           = "./modules/acme-cert"
+module "tls_vault" {
+  source            = "./modules/tls-vault"
+  hostname          = var.cert_common_name
+  organization_name = var.cert_organization_name
+  common_name       = var.cert_common_name
+  country           = var.cert_country
   project_id       = var.project_id
   credentials_file = var.credentials_file
   cluster_endpoint = module.gke-cluster.endpoint
   cluster_cert     = module.gke-cluster.ca_certificate
   vault_namespace  = module.vault.vault_namespace
   cert_secret_name = var.cert_secret_name
-  vault_hostname   = var.vault_hostname
-  email_address    = var.public_cert_email_address
 }
+#module "acme_cert" {
+#  source           = "./modules/acme-cert"
+#  project_id       = var.project_id
+#  credentials_file = var.credentials_file
+#  cluster_endpoint = module.gke-cluster.endpoint
+#  cluster_cert     = module.gke-cluster.ca_certificate
+#  vault_namespace  = module.vault.vault_namespace
+#  cert_secret_name = var.cert_secret_name
+#  vault_hostname   = var.vault_hostname
+#  email_address    = var.public_cert_email_address
+#}
 
 module "external_ip_address" {
   source     = "./modules/google-static-ip"
@@ -63,6 +70,7 @@ module "vault" {
   region                    = var.region
   vault_version             = var.vault_version
   unseal_keyring_name       = module.unseal_kms.unseal_keyring_name
+  unseal_keyring_region     = var.keyring_location
   unseal_key_name           = module.unseal_kms.unseal_key_name
   unseal_account_name       = module.unseal_kms.service_account
   num_vault_pods            = var.num_vault_pods
@@ -74,18 +82,20 @@ module "vault" {
   vault_internal_tls_key    = module.tls.key
   loadbalancer_ip           = module.external_ip_address.ip_address
   vault_tls_k8s_secret      = var.cert_secret_name
-  #vault_tls_secret_resource = module.tls_vault.cert
-  vault_tls_secret_resource = module.acme_cert.secret_resource
+  vault_tls_secret_resource = module.tls_vault.cert
+#  vault_tls_secret_resource = module.acme_cert.secret_resource
   vault_hostname            = var.vault_hostname
+  vault_license             = var.license_file
 }
 
 module "unseal_kms" {
-  source           = "./modules/google-kms"
+  source           = "./modules/google-kms-ekm"
   credentials_file = var.credentials_file
   project_id       = var.project_id
   region           = "global"
-  keyring_name     = module.randomized.friendly_keyring_name
-  key_name         = module.randomized.friendly_key_name
+  key_ring         = var.key_ring
+  crypto_key       = var.crypto_key
+  keyring_location = var.keyring_location
 }
 
 module "randomized" {
